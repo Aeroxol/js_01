@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 import readlineSync from 'readline-sync';
-import {startGame} from "./game.js";
+import { startGame } from "./game.js";
 
 // 로비 화면을 출력하는 함수
 function displayLobby() {
@@ -75,8 +75,10 @@ function handleUserInput() {
 
 // 게임 시작 함수
 function start() {
-    displayLobby();
-    handleUserInput();
+    do {
+        displayLobby();
+        handleUserInput();
+    } while (false)
 }
 
 // 게임 실행
