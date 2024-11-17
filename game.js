@@ -1,84 +1,11 @@
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
 
+import Player from './player.js';
+import Monster from './monster.js';
+
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
-}
-
-class Player {
-  constructor() {
-    this.hp = 20;
-    this.maxHp = 20;
-    this.atkMax = 2;
-    this.atkMin = 2;
-    this.def = 0;
-    this.criticalChance = 0.1;
-    this.runChance = 0.5;
-    this._exp = 0;
-    this.level = 1;
-    this.upgrade = 1;
-  }
-
-  get exp() {
-    return this._exp;
-  }
-
-  set exp(value) {
-    this._exp += value;
-    if (this._exp >= this.expReq) {
-      this._exp -= this.expReq;
-      this.level++;
-      this.maxHp += 2;
-      this.upgrade++;
-      console.log(`\n레벨업!\n`);
-    }
-  }
-
-  get expReq() {
-    return 4 + 2 * this.level;
-  }
-
-  attack() {
-    // 플레이어의 공격
-    if (Math.random() < this.criticalChance) {
-      return Math.floor(this.atkMin + Math.random() * (this.atkMax - this.atkMin)) * 2;
-    }
-    return Math.floor(this.atkMin + Math.random() * (this.atkMax - this.atkMin));
-  }
-
-  run() {
-    if (Math.random() < this.runChance) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-}
-
-class Monster {
-  constructor() {
-    this.maxHp = 10;
-    this.hp = 10;
-    this.atkMax = 2;
-    this.atkMin = 1;
-    this.def = 0;
-    this.exp = 3;
-  }
-
-  attack() {
-    // 몬스터의 공격
-    return Math.floor(this.atkMin + Math.random() * (this.atkMax - this.atkMin));
-  }
-
-  levelup() {
-    this.maxHp += Math.floor(3 + 2 * Math.random()); // 3 or 4
-    var min = 2 * Math.random();
-    this.atkMax += Math.floor(min + Math.random()); // 0 ~ 2
-    this.atkMin += Math.floor(min); // 0 or 1
-    this.def += Math.floor(1.5 * Math.random()); // 0 or 1
-    this.exp += 2;
-    this.hp = this.maxHp;
-  }
 }
 
 function displayStatus(stage, player, monster) {
@@ -169,112 +96,132 @@ const shop = async (stage, player) => {
 }
 
 const battle = async (stage, player, monster) => {
+  // Initiate
   let logs = [];
+  let player_speed_guage = 0;
+  let monster_speed_guage = 0;
 
   battleLoop:
   while (player.hp > 0) {
+    player_speed_guage += player.speed;
+    monster_speed_guage += monster.speed;
+    if (player_speed_guage < 100 && monster_speed_guage < 100) continue;
+
+    // 기본 UI 표시
     console.clear();
     displayStatus(stage, player, monster);
-
     logs.forEach((log) => console.log(log));
 
-    console.log(
-      chalk.green(
-        `1. 공격한다 2. 도망친다.`,
-      ),
-    );
-    const choice = readlineSync.question(`당신의 선택은? `);
-
-    // 플레이어의 선택에 따라 다음 행동 처리
-    //logs.push(chalk.green(`${choice}를 선택하셨습니다.`));
-
-    switch (choice) {
-      case '1':
-        console.log(chalk.greenBright(
-          `▶플레이어의 공격!`
-        ))
-        logs.push(chalk.greenBright(
-          `▶플레이어의 공격!`
-        ));
-        var dmg = player.attack();
-        dmg = (dmg - monster.def) >= 0 ? (dmg - monster.def) : 0;
-        monster.hp -= dmg;
-        console.log(
-          chalk.green(
-            `${dmg}`
-          ) +
-          chalk.white(
-            `만큼의 피해를 입혔다!`
-          ))
-        logs.push(
-          chalk.green(
-            `${dmg}`
-          ) +
-          chalk.white(
-            `만큼의 피해를 입혔다!`
-          ));
-        break;
-      case '2':
-        try {
-          await sleep(600);
-          var flag = player.run();
-          if (flag) {
-            console.log(
-              `플레이어는 도망쳤다...`
-            );
-            player.exp += 1;
-            await sleep(2000);
-            break battleLoop;
-          }
-          console.log(chalk.white(
-            `지금은 도망칠 수 없다!`
-          ))
-          logs.push(chalk.white(
-            `지금은 도망칠 수 없다!`
-          ));
-        } catch (error) {
-          console.error(error);
-          process.exit(0);
-        }
-        break;
-      default:
-        console.log(chalk.red(`올바른 입력이 아닙니다`));
-        await sleep(1000);
-        continue battleLoop;
-    }
-    if (monster.hp <= 0) {
-      player.exp += monster.exp;
-      readlineSync.question(
-        chalk.yellow(
-          `몬스터를 쓰러뜨렸다!\n`
-        ) +
-        chalk.gray(
-          `아무 버튼을 눌러 진행...`
-        )
+    // 플레이어 턴
+    if (player_speed_guage >= 100) {
+      // 플레이어의 선택
+      console.log(
+        chalk.green(
+          `1. 공격한다 2. 도망친다.`,
+        ),
       );
-      player.hp = player.maxHp;
-      break;
+
+      // 플레이어의 행동
+      const choice = readlineSync.question(`당신의 선택은? `);
+      switch (choice) {
+        case '1':
+          logs.push(chalk.greenBright(
+            `▶플레이어의 공격!`
+          ));
+          console.log(chalk.greenBright(
+            `▶플레이어의 공격!`
+          ))
+          var dmg = player.attack();
+          dmg = (dmg - monster.def) >= 0 ? (dmg - monster.def) : 0;
+          monster.hp -= dmg;
+          console.log(
+            chalk.green(
+              `${dmg}`
+            ) +
+            chalk.white(
+              ` 만큼의 피해를 입혔다!`
+            ))
+          logs.push(
+            chalk.green(
+              `${dmg}`
+            ) +
+            chalk.white(
+              ` 만큼의 피해를 입혔다!`
+            ));
+          break;
+        case '2':
+          try {
+            await sleep(600);
+            var flag = player.run();
+            if (flag) {
+              console.log(
+                `플레이어는 도망쳤다...`
+              );
+              player.exp += 1;
+              await sleep(2000);
+              break battleLoop;
+            }
+            console.log(chalk.white(
+              `지금은 도망칠 수 없다!`
+            ))
+            logs.push(chalk.white(
+              `지금은 도망칠 수 없다!`
+            ));
+          } catch (error) {
+            console.error(error);
+            process.exit(0);
+          }
+          break;
+        default:
+          console.log(chalk.red(`올바른 입력이 아닙니다`));
+          await sleep(1000);
+          continue battleLoop;
+      }
+
+      if (monster.hp <= 0) {
+        player.exp += monster.exp;
+        readlineSync.question(
+          chalk.yellow(
+            `몬스터를 쓰러뜨렸다!\n`
+          ) +
+          chalk.gray(
+            `아무 버튼이나 눌러서 진행...`
+          )
+        );
+        player.hp = player.maxHp;
+        break;
+      }
+
+      player_speed_guage -= 100;
     }
-    console.log(chalk.redBright(
-      `▶몬스터의 공격!`
-    ))
-    logs.push(chalk.redBright(
-      `▶몬스터의 공격!`
-    ));
-    var dmg = monster.attack();
-    dmg = (dmg - player.def) >= 0 ? (dmg - player.def) : 0;
-    console.log(chalk.red(
-      `${dmg}`
-    ) +
-      chalk.white(
-        `만큼의 피해를 입었다!`
+    // 몬스터 턴
+    if (monster_speed_guage >= 100) {
+      console.log(chalk.redBright(
+        `▶몬스터의 공격!`
       ))
-    logs.push(chalk.red(
-      `${dmg}`
-    ) + chalk.white(
-      `만큼의 피해를 입었다!`
-    ));
-    player.hp -= dmg;
+      logs.push(chalk.redBright(
+        `▶몬스터의 공격!`
+      ));
+      var dmg = monster.attack();
+      dmg = (dmg - player.def) >= 0 ? (dmg - player.def) : 0;
+      console.log(chalk.red(
+        `${dmg}`
+      ) +
+        chalk.white(
+          `만큼의 피해를 입었다!`
+        ))
+      logs.push(chalk.red(
+        `${dmg}`
+      ) + chalk.white(
+        `만큼의 피해를 입었다!`
+      ));
+      player.hp -= dmg;
+
+      monster_speed_guage -= 100;
+    }
+
+    
+
   }
 };
 
