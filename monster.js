@@ -7,6 +7,7 @@ export default class Monster {
       this.def = 0;
       this.exp = 3;
       this.speed = 10;
+      this.gold = 3;
     }
   
     attack() {

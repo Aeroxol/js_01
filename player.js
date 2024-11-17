@@ -23,7 +23,8 @@ export default class Player {
       if (this._exp >= this.expReq) {
         this._exp -= this.expReq;
         this.level++;
-        this.maxHp += 2;
+        this.maxHp += 5;
+        this.hp += 5;
         this.upgrade++;
         console.log(`\n레벨업!\n`);
       }

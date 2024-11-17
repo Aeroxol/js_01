@@ -48,7 +48,7 @@ const equipment_shop = async (player) => {
     console.log(
       `1. 무기 강화(3g) 2. 방어구 강화(2g) 3. 나가기`
     );
-    logs.forEach((log) => console.log(log));
+    logs.slice(-5).forEach((log) => console.log(log));
 
     const choice = readlineSync.question(`당신의 선택은? `);
 
@@ -99,7 +99,7 @@ const accessory_shop = async (player) => {
     console.log(
       `1. 회심의 부적(10g) 2. 속도의 부적(10g) 3. 나가기`
     );
-    logs.forEach((log) => console.log(log));
+    logs.slice(-5).forEach((log) => console.log(log));
 
     const choice = readlineSync.question(`당신의 선택은? `);
 
@@ -189,7 +189,7 @@ const shop = async (player) => {
 
     const choice = readlineSync.question(`당신의 선택은? `);
 
-    logs.forEach((log) => console.log(log));
+    logs.slice(-5).forEach((log) => console.log(log));
 
     switch (choice) {
       case '1': // 장비상점
@@ -231,7 +231,7 @@ const battle = async (stage, player, monster) => {
     // 기본 UI 표시
     console.clear();
     displayStatus(stage, player, monster);
-    logs.forEach((log) => console.log(log));
+    logs.slice(-5).forEach((log) => console.log(log));
 
     // 플레이어 턴
     if (player_speed_guage >= 100) {
