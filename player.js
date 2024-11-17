@@ -11,6 +11,7 @@ export default class Player {
       this.level = 1;
       this.upgrade = 1;
       this.speed = 10;
+      this.gold = 5;
     }
   
     get exp() {
